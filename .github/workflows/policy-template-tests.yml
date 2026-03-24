@@ -1,0 +1,50 @@
+name: policy-template-tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-policy-templates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Execute framework tests for every template in repo
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          templates=(tests/policy_templates/*.py)
+          if [ ${#templates[@]} -eq 0 ]; then
+            echo "No policy templates found."
+            exit 1
+          fi
+
+          for template in "${templates[@]}"; do
+            name="$(basename "$template")"
+            echo "Running template: $name"
+
+            if [[ "$name" == *fail* ]]; then
+              if python -m pytest -q tests/test_policy_flows.py --policy-template="$template"; then
+                echo "Expected failure template '$name' to fail but it passed."
+                exit 1
+              fi
+            else
+              python -m pytest -q tests/test_policy_flows.py --policy-template="$template"
+            fi
+          done
