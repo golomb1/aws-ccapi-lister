@@ -35,11 +35,20 @@ jobs:
             --junitxml=reports/pytest-results.xml \
             -q
 
+      - name: Run intentionally failing policy tests (reporting demo)
+        continue-on-error: true
+        run: |
+          pytest \
+            tests/test_policy_flows.py \
+            --policy-template=tests.policy_templates.failing_policy \
+            --junitxml=reports/pytest-results-failing.xml \
+            -q
+
       # Keep artifact upload unconditional so failures still produce report data.
       - name: Upload pytest JUnit XML
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: policy-test-results
-          path: reports/pytest-results.xml
+          path: reports/*.xml
           if-no-files-found: warn
