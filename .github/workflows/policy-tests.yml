@@ -1,0 +1,45 @@
+name: Policy Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  policy-tests:
+    name: Dummy policy framework tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run dummy policy flow tests and emit JUnit XML
+        run: |
+          mkdir -p reports
+          pytest \
+            tests/test_policy_flows.py \
+            --policy-template=tests.policy_templates.dummy_policy \
+            --junitxml=reports/pytest-results.xml \
+            -q
+
+      # Keep artifact upload unconditional so failures still produce report data.
+      - name: Upload pytest JUnit XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: policy-test-results
+          path: reports/pytest-results.xml
+          if-no-files-found: warn

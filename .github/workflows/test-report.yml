@@ -1,0 +1,37 @@
+name: Policy Test Report
+
+on:
+  workflow_run:
+    workflows: ["Policy Tests"]
+    types: [completed]
+
+permissions:
+  actions: read
+  checks: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  publish-report:
+    name: Publish pytest results to PR checks
+    if: ${{ github.event.workflow_run.conclusion != 'cancelled' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download artifact from the completed "Policy Tests" workflow run.
+      - name: Download pytest XML artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          name: policy-test-results
+          path: reports
+          if_no_artifact_found: warn
+
+      # Parse pytest JUnit XML and publish a Check Run + workflow summary.
+      - name: Publish test report
+        uses: dorny/test-reporter@v2
+        with:
+          name: Policy Framework Tests
+          path: reports/**/*.xml
+          reporter: java-junit
+          fail-on-error: false
