@@ -1,0 +1,8 @@
+# Test runner
+pytest>=8.0
+
+# Async test/harness helpers for eventual consistency and threaded execution
+anyio>=4.0
+
+# Pulumi Automation API (optional for mock mode, required for real cloud runs)
+pulumi>=3.0
